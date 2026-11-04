@@ -1,20 +1,4 @@
 {
   "version": 2,
-  "name": "kipizk",
-  "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/remove-bg.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/remove-bg",
-      "dest": "api/remove-bg.py"
-    }
-  ]
+  "name": "kipizk"
 }
