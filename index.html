@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KiPiZK - Remove Background Gratis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(244, 92, 124, 0.1) 0%, transparent 50%);
+            animation: backgroundShift 20s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            margin-top: 30px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f45c7c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            letter-spacing: -2px;
+            text-shadow: 0 0 40px rgba(102, 126, 234, 0.3);
+            animation: gradientShift 3s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            color: #a0a0b0;
+            font-size: 1.2rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            animation: fadeInUp 1s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .upload-area {
+            background: rgba(20, 20, 30, 0.5);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 2px dashed rgba(102, 126, 234, 0.3);
+            border-radius: 24px;
+            padding: 80px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .upload-area:hover::before {
+            opacity: 1;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(102, 126, 234, 0.6);
+            background: rgba(30, 30, 50, 0.7);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
+        }
+
+        .upload-area.dragover {
+            border-color: rgba(118, 75, 162, 0.8);
+            background: rgba(40, 40, 60, 0.8);
+            transform: scale(1.02);
+            box-shadow: 0 25px 70px rgba(118, 75, 162, 0.3);
+        }
+
+        .upload-icon {
+            font-size: 5rem;
+            margin-bottom: 25px;
+            animation: float 3s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upload-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f0f0f0;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .upload-hint {
+            color: #8890a0;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .result-area {
+            display: none;
+            background: rgba(20, 20, 30, 0.5);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-area.active {
+            display: block;
+            animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .image-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .image-box {
+            background: rgba(15, 15, 25, 0.6);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .image-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .image-label {
+            color: #9ca3af;
+            font-size: 0.85rem;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 450px;
+            border-radius: 12px;
+            object-fit: contain;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        canvas {
+            max-width: 100%;
+            border-radius: 12px;
+            background: 
+                repeating-conic-gradient(#1a1a1a 0% 25%, #0f0f0f 0% 50%) 50% / 16px 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: linear-gradient(135deg, #4a5568 0%, #6b7280 100%);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #4a5568 0%, #6b7280 100%);
+            box-shadow: 0 8px 25px rgba(74, 85, 104, 0.3);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 12px 35px rgba(74, 85, 104, 0.5);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 60px 30px;
+            color: #9ca3af;
+        }
+
+        .loading.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .spinner {
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 25px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-text {
+            font-size: 1.2rem;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 2px;
+            margin: 20px auto 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+            animation: progress 2s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 100%; }
+            100% { width: 0%; }
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 40px 20px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        footer p {
+            margin: 8px 0;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+                letter-spacing: -1px;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .image-comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-area {
+                padding: 50px 25px;
+            }
+
+            .upload-icon {
+                font-size: 3.5rem;
+            }
+
+            .upload-text {
+                font-size: 1.2rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>KiPiZK</h1>
+        <p class="subtitle">Remove Background dari Gambar - 100% Gratis & Tanpa Iklan</p>
+    </header>
+
+    <div class="container">
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">🖼️</div>
+            <div class="upload-text">Klik atau Drag & Drop Gambar</div>
+            <div class="upload-hint">Mendukung JPG, PNG, WebP - Maks 10MB</div>
+            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="status-text">Memproses gambar...</div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div style="font-size: 0.9rem; margin-top: 15px; color: #6b7280;">Mohon tunggu, AI sedang bekerja</div>
+        </div>
+
+        <div class="result-area" id="resultArea">
+            <div class="image-comparison">
+                <div class="image-box">
+                    <div class="image-label">Gambar Asli</div>
+                    <img id="originalImage" class="image-preview" alt="Original">
+                </div>
+                <div class="image-box">
+                    <div class="image-label">Background Dihapus</div>
+                    <canvas id="resultCanvas"></canvas>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="downloadBtn">⬇️ Download PNG</button>
+                <button id="newImageBtn" class="btn-secondary">🔄 Gambar Baru</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>KiPiZK</strong> - Sepenuhnya gratis, tanpa iklan, processing di browser Anda</p>
+        <p style="font-size: 0.85rem;">🔒 Gambar Anda tidak dikirim ke server manapun - 100% Private</p>
+    </footer>
+
+    <!-- MediaPipe Image Segmentation -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/vision_bundle.js" crossorigin="anonymous"></script>
+    
+    <script>
+        const { ImageSegmenter, FilesetResolver } = window.vision;
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        const resultArea = document.getElementById('resultArea');
+        const originalImage = document.getElementById('originalImage');
+        const resultCanvas = document.getElementById('resultCanvas');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newImageBtn = document.getElementById('newImageBtn');
+
+        let imageSegmenter = null;
+        let currentImageBlob = null;
+
+        // Initialize MediaPipe
+        async function initializeSegmenter() {
+            try {
+                const vision = await FilesetResolver.forVisionTasks(
+                    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm"
+                );
+                
+                imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
+                    baseOptions: {
+                        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite",
+                        delegate: "GPU"
+                    },
+                    runningMode: "IMAGE",
+                    outputCategoryMask: true,
+                    outputConfidenceMasks: false
+                });
+                console.log('✅ Segmenter initialized');
+            } catch (error) {
+                console.error('❌ Failed to initialize segmenter:', error);
+            }
+        }
+
+        // Initialize on page load
+        initializeSegmenter();
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Handle file upload
+        async function handleFile(file) {
+            // Validate file
+            if (!file.type.startsWith('image/')) {
+                alert('Harap pilih file gambar yang valid');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Ukuran file maksimal 10MB');
+                return;
+            }
+
+            // Show loading
+            uploadArea.style.display = 'none';
+            loading.classList.add('active');
+            resultArea.classList.remove('active');
+
+            try {
+                // Wait for segmenter if not ready
+                let retries = 0;
+                while (!imageSegmenter && retries < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    retries++;
+                }
+
+                if (!imageSegmenter) {
+                    throw new Error('Failed to initialize image segmenter');
+                }
+
+                // Load image
+                const img = await loadImage(file);
+                originalImage.src = img.src;
+
+                // Process with MediaPipe
+                await processImage(img);
+
+            } catch (error) {
+                console.error('Error processing image:', error);
+                alert('Terjadi kesalahan saat memproses gambar. Pastikan ini gambar dengan subjek yang jelas.');
+                resetUI();
+            }
+        }
+
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function processImage(img) {
+            // Create canvas for processing
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = img.width;
+            tempCanvas.height = img.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(img, 0, 0);
+
+            // Segment image
+            imageSegmenter.segment(img, (result) => {
+                if (!result.categoryMask) {
+                    throw new Error('No segmentation result');
+                }
+
+                // Get mask data
+                const mask = result.categoryMask.getAsFloat32Array();
+                const width = result.categoryMask.width;
+                const height = result.categoryMask.height;
+
+                // Create result canvas
+                resultCanvas.width = width;
+                resultCanvas.height = height;
+                const ctx = resultCanvas.getContext('2d');
+
+                // Draw original image
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Get image data
+                const imageData = ctx.getImageData(0, 0, width, height);
+                const pixels = imageData.data;
+
+                // Apply mask (remove background)
+                for (let i = 0; i < mask.length; i++) {
+                    const pixelIndex = i * 4;
+                    // If mask value is 0 (background), make it transparent
+                    if (mask[i] === 0) {
+                        pixels[pixelIndex + 3] = 0; // Set alpha to 0
+                    }
+                }
+
+                // Put modified image data back
+                ctx.putImageData(imageData, 0, 0);
+
+                // Convert to blob
+                resultCanvas.toBlob((blob) => {
+                    currentImageBlob = blob;
+                    
+                    // Show result
+                    loading.classList.remove('active');
+                    resultArea.classList.add('active');
+                }, 'image/png');
+            });
+        }
+
+        // Download button
+        downloadBtn.addEventListener('click', () => {
+            if (!currentImageBlob) {
+                // Fallback: get from canvas
+                resultCanvas.toBlob((blob) => {
+                    downloadBlob(blob);
+                }, 'image/png');
+            } else {
+                downloadBlob(currentImageBlob);
+            }
+        });
+
+        function downloadBlob(blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `kipizk-${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // New image button
+        newImageBtn.addEventListener('click', () => {
+            resetUI();
+            fileInput.value = '';
+        });
+
+        function resetUI() {
+            uploadArea.style.display = 'block';
+            loading.classList.remove('active');
+            resultArea.classList.remove('active');
+            currentImageBlob = null;
+        }
+    </script>
+</body>
+</html>
