@@ -15,7 +15,8 @@ Website untuk menghapus background gambar secara otomatis menggunakan AI. 100% g
 ## Teknologi
 
 - HTML/CSS/JavaScript (Vanilla)
-- TensorFlow.js + BodyPix Model
+- @imgly/background-removal (RMBG AI Model)
+- Universal object segmentation (bukan hanya manusia)
 - Google Fonts (Inter)
 
 ## Deploy

@@ -479,12 +479,10 @@
         <p style="font-size: 0.85rem;">🔒 Gambar Anda tidak dikirim ke server manapun - 100% Private</p>
     </footer>
 
-    <!-- Background Removal Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0"></script>
-    
-    <script>
-        let bodyPixModel = null;
+    <!-- Background Removal Library - RMBG Model -->
+    <script type="module">
+        import imglyRemoveBackground from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm';
+
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const loading = document.getElementById('loading');
@@ -496,24 +494,7 @@
 
         let currentImageBlob = null;
 
-        // Initialize BodyPix
-        async function initializeModel() {
-            try {
-                console.log('Loading BodyPix model...');
-                bodyPixModel = await bodyPix.load({
-                    architecture: 'MobileNetV1',
-                    outputStride: 16,
-                    multiplier: 0.75,
-                    quantBytes: 2
-                });
-                console.log('✅ BodyPix model loaded successfully');
-            } catch (error) {
-                console.error('❌ Failed to load model:', error);
-            }
-        }
-
-        // Initialize on page load
-        initializeModel();
+        console.log('✅ Background removal library loaded');
 
         // Upload area click
         uploadArea.addEventListener('click', (e) => {
@@ -552,11 +533,11 @@
 
         // Handle file upload
         async function handleFile(file) {
-            console.log('Handling file:', file.name);
+            console.log('Processing file:', file.name, file.size, 'bytes');
             
             // Validate file
             if (!file.type.startsWith('image/')) {
-                alert('Harap pilih file gambar yang valid');
+                alert('Harap pilih file gambar yang valid (JPG, PNG, WebP)');
                 return;
             }
 
@@ -571,92 +552,54 @@
             resultArea.classList.remove('active');
 
             try {
-                // Wait for model if not ready
-                let retries = 0;
-                while (!bodyPixModel && retries < 100) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    retries++;
-                }
+                // Load and show original image
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    originalImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
 
-                if (!bodyPixModel) {
-                    throw new Error('Model tidak berhasil dimuat. Silakan refresh halaman.');
-                }
-
-                // Load image
-                const img = await loadImage(file);
-                originalImage.src = img.src;
-
-                console.log('Segmenting image...');
-                // Segment with BodyPix
-                const segmentation = await bodyPixModel.segmentPerson(img, {
-                    flipHorizontal: false,
-                    internalResolution: 'medium',
-                    segmentationThreshold: 0.7
+                console.log('Removing background...');
+                
+                // Process with imgly background removal
+                const blob = await imglyRemoveBackground(file, {
+                    progress: (key, current, total) => {
+                        console.log(`Progress: ${key} ${current}/${total}`);
+                    }
                 });
 
-                console.log('Applying mask...');
-                // Create result
-                await applySegmentation(img, segmentation);
+                console.log('✅ Background removed successfully');
+                currentImageBlob = blob;
 
-                console.log('✅ Processing complete');
-                // Show result
-                loading.classList.remove('active');
-                resultArea.classList.add('active');
+                // Display result on canvas
+                const img = new Image();
+                const url = URL.createObjectURL(blob);
+                
+                img.onload = () => {
+                    resultCanvas.width = img.width;
+                    resultCanvas.height = img.height;
+                    const ctx = resultCanvas.getContext('2d');
+                    ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+                    ctx.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(url);
+
+                    // Show result
+                    loading.classList.remove('active');
+                    resultArea.classList.add('active');
+                };
+                
+                img.onerror = (error) => {
+                    console.error('Error loading result image:', error);
+                    throw new Error('Gagal memuat hasil');
+                };
+                
+                img.src = url;
 
             } catch (error) {
                 console.error('Error processing image:', error);
-                alert('Terjadi kesalahan: ' + error.message);
+                alert('Terjadi kesalahan saat memproses gambar: ' + error.message + '\n\nTips:\n- Pastikan koneksi internet stabil\n- Refresh halaman dan coba lagi\n- Gunakan gambar dengan ukuran lebih kecil');
                 resetUI();
             }
-        }
-
-        function loadImage(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => resolve(img);
-                    img.onerror = reject;
-                    img.src = e.target.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        async function applySegmentation(img, segmentation) {
-            // Set canvas size
-            resultCanvas.width = img.width;
-            resultCanvas.height = img.height;
-            const ctx = resultCanvas.getContext('2d');
-
-            // Draw original image
-            ctx.drawImage(img, 0, 0);
-
-            // Get image data
-            const imageData = ctx.getImageData(0, 0, img.width, img.height);
-            const pixels = imageData.data;
-
-            // Apply mask - remove background
-            const mask = segmentation.data;
-            for (let i = 0; i < mask.length; i++) {
-                const pixelIndex = i * 4;
-                // If mask is 0 (background), make transparent
-                if (mask[i] === 0) {
-                    pixels[pixelIndex + 3] = 0; // Alpha = 0
-                }
-            }
-
-            // Put back modified image
-            ctx.putImageData(imageData, 0, 0);
-
-            // Create blob
-            return new Promise((resolve) => {
-                resultCanvas.toBlob((blob) => {
-                    currentImageBlob = blob;
-                    resolve();
-                }, 'image/png');
-            });
         }
 
         // Download button
@@ -664,7 +607,7 @@
             if (!currentImageBlob) {
                 // Fallback: get from canvas
                 resultCanvas.toBlob((blob) => {
-                    downloadBlob(blob);
+                    if (blob) downloadBlob(blob);
                 }, 'image/png');
             } else {
                 downloadBlob(currentImageBlob);
@@ -675,11 +618,12 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `kipizk-${Date.now()}.png`;
+            a.download = `kipizk-removed-bg-${Date.now()}.png`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            console.log('✅ Image downloaded');
         }
 
         // New image button
@@ -693,6 +637,9 @@
             loading.classList.remove('active');
             resultArea.classList.remove('active');
             currentImageBlob = null;
+            originalImage.src = '';
+            const ctx = resultCanvas.getContext('2d');
+            ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
         }
     </script>
 </body>
