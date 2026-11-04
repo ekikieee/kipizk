@@ -483,7 +483,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/vision_bundle.js" crossorigin="anonymous"></script>
     
     <script>
-        const { ImageSegmenter, FilesetResolver } = window.vision;
+        // Check if MediaPipe loaded
+        if (!window.vision) {
+            console.error('MediaPipe vision bundle not loaded');
+        }
+        
+        const { ImageSegmenter, FilesetResolver } = window.vision || {};
         
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
@@ -500,6 +505,11 @@
         // Initialize MediaPipe
         async function initializeSegmenter() {
             try {
+                if (!FilesetResolver || !ImageSegmenter) {
+                    throw new Error('MediaPipe library not loaded');
+                }
+                
+                console.log('Initializing segmenter...');
                 const vision = await FilesetResolver.forVisionTasks(
                     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm"
                 );
@@ -513,9 +523,10 @@
                     outputCategoryMask: true,
                     outputConfidenceMasks: false
                 });
-                console.log('✅ Segmenter initialized');
+                console.log('✅ Segmenter initialized successfully');
             } catch (error) {
                 console.error('❌ Failed to initialize segmenter:', error);
+                alert('Gagal menginisialisasi AI model. Pastikan koneksi internet stabil dan refresh halaman.');
             }
         }
 
@@ -523,7 +534,9 @@
         initializeSegmenter();
 
         // Upload area click
-        uploadArea.addEventListener('click', () => {
+        uploadArea.addEventListener('click', (e) => {
+            console.log('Upload area clicked');
+            e.stopPropagation();
             fileInput.click();
         });
 
@@ -549,6 +562,7 @@
 
         // File input change
         fileInput.addEventListener('change', (e) => {
+            console.log('File input changed', e.target.files);
             if (e.target.files.length > 0) {
                 handleFile(e.target.files[0]);
             }
