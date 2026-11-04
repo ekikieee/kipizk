@@ -479,17 +479,12 @@
         <p style="font-size: 0.85rem;">🔒 Gambar Anda tidak dikirim ke server manapun - 100% Private</p>
     </footer>
 
-    <!-- MediaPipe Image Segmentation -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/vision_bundle.js" crossorigin="anonymous"></script>
+    <!-- Background Removal Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0"></script>
     
     <script>
-        // Check if MediaPipe loaded
-        if (!window.vision) {
-            console.error('MediaPipe vision bundle not loaded');
-        }
-        
-        const { ImageSegmenter, FilesetResolver } = window.vision || {};
-        
+        let bodyPixModel = null;
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const loading = document.getElementById('loading');
@@ -499,39 +494,26 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const newImageBtn = document.getElementById('newImageBtn');
 
-        let imageSegmenter = null;
         let currentImageBlob = null;
 
-        // Initialize MediaPipe
-        async function initializeSegmenter() {
+        // Initialize BodyPix
+        async function initializeModel() {
             try {
-                if (!FilesetResolver || !ImageSegmenter) {
-                    throw new Error('MediaPipe library not loaded');
-                }
-                
-                console.log('Initializing segmenter...');
-                const vision = await FilesetResolver.forVisionTasks(
-                    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm"
-                );
-                
-                imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
-                    baseOptions: {
-                        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite",
-                        delegate: "GPU"
-                    },
-                    runningMode: "IMAGE",
-                    outputCategoryMask: true,
-                    outputConfidenceMasks: false
+                console.log('Loading BodyPix model...');
+                bodyPixModel = await bodyPix.load({
+                    architecture: 'MobileNetV1',
+                    outputStride: 16,
+                    multiplier: 0.75,
+                    quantBytes: 2
                 });
-                console.log('✅ Segmenter initialized successfully');
+                console.log('✅ BodyPix model loaded successfully');
             } catch (error) {
-                console.error('❌ Failed to initialize segmenter:', error);
-                alert('Gagal menginisialisasi AI model. Pastikan koneksi internet stabil dan refresh halaman.');
+                console.error('❌ Failed to load model:', error);
             }
         }
 
         // Initialize on page load
-        initializeSegmenter();
+        initializeModel();
 
         // Upload area click
         uploadArea.addEventListener('click', (e) => {
@@ -570,6 +552,8 @@
 
         // Handle file upload
         async function handleFile(file) {
+            console.log('Handling file:', file.name);
+            
             // Validate file
             if (!file.type.startsWith('image/')) {
                 alert('Harap pilih file gambar yang valid');
@@ -587,27 +571,41 @@
             resultArea.classList.remove('active');
 
             try {
-                // Wait for segmenter if not ready
+                // Wait for model if not ready
                 let retries = 0;
-                while (!imageSegmenter && retries < 50) {
+                while (!bodyPixModel && retries < 100) {
                     await new Promise(resolve => setTimeout(resolve, 100));
                     retries++;
                 }
 
-                if (!imageSegmenter) {
-                    throw new Error('Failed to initialize image segmenter');
+                if (!bodyPixModel) {
+                    throw new Error('Model tidak berhasil dimuat. Silakan refresh halaman.');
                 }
 
                 // Load image
                 const img = await loadImage(file);
                 originalImage.src = img.src;
 
-                // Process with MediaPipe
-                await processImage(img);
+                console.log('Segmenting image...');
+                // Segment with BodyPix
+                const segmentation = await bodyPixModel.segmentPerson(img, {
+                    flipHorizontal: false,
+                    internalResolution: 'medium',
+                    segmentationThreshold: 0.7
+                });
+
+                console.log('Applying mask...');
+                // Create result
+                await applySegmentation(img, segmentation);
+
+                console.log('✅ Processing complete');
+                // Show result
+                loading.classList.remove('active');
+                resultArea.classList.add('active');
 
             } catch (error) {
                 console.error('Error processing image:', error);
-                alert('Terjadi kesalahan saat memproses gambar. Pastikan ini gambar dengan subjek yang jelas.');
+                alert('Terjadi kesalahan: ' + error.message);
                 resetUI();
             }
         }
@@ -626,56 +624,37 @@
             });
         }
 
-        async function processImage(img) {
-            // Create canvas for processing
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = img.width;
-            tempCanvas.height = img.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(img, 0, 0);
+        async function applySegmentation(img, segmentation) {
+            // Set canvas size
+            resultCanvas.width = img.width;
+            resultCanvas.height = img.height;
+            const ctx = resultCanvas.getContext('2d');
 
-            // Segment image
-            imageSegmenter.segment(img, (result) => {
-                if (!result.categoryMask) {
-                    throw new Error('No segmentation result');
+            // Draw original image
+            ctx.drawImage(img, 0, 0);
+
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            const pixels = imageData.data;
+
+            // Apply mask - remove background
+            const mask = segmentation.data;
+            for (let i = 0; i < mask.length; i++) {
+                const pixelIndex = i * 4;
+                // If mask is 0 (background), make transparent
+                if (mask[i] === 0) {
+                    pixels[pixelIndex + 3] = 0; // Alpha = 0
                 }
+            }
 
-                // Get mask data
-                const mask = result.categoryMask.getAsFloat32Array();
-                const width = result.categoryMask.width;
-                const height = result.categoryMask.height;
+            // Put back modified image
+            ctx.putImageData(imageData, 0, 0);
 
-                // Create result canvas
-                resultCanvas.width = width;
-                resultCanvas.height = height;
-                const ctx = resultCanvas.getContext('2d');
-
-                // Draw original image
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Get image data
-                const imageData = ctx.getImageData(0, 0, width, height);
-                const pixels = imageData.data;
-
-                // Apply mask (remove background)
-                for (let i = 0; i < mask.length; i++) {
-                    const pixelIndex = i * 4;
-                    // If mask value is 0 (background), make it transparent
-                    if (mask[i] === 0) {
-                        pixels[pixelIndex + 3] = 0; // Set alpha to 0
-                    }
-                }
-
-                // Put modified image data back
-                ctx.putImageData(imageData, 0, 0);
-
-                // Convert to blob
+            // Create blob
+            return new Promise((resolve) => {
                 resultCanvas.toBlob((blob) => {
                     currentImageBlob = blob;
-                    
-                    // Show result
-                    loading.classList.remove('active');
-                    resultArea.classList.add('active');
+                    resolve();
                 }, 'image/png');
             });
         }

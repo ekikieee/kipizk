@@ -15,7 +15,7 @@ Website untuk menghapus background gambar secara otomatis menggunakan AI. 100% g
 ## Teknologi
 
 - HTML/CSS/JavaScript (Vanilla)
-- MediaPipe Image Segmentation
+- TensorFlow.js + BodyPix Model
 - Google Fonts (Inter)
 
 ## Deploy
