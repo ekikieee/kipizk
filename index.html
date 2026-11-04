@@ -479,10 +479,12 @@
         <p style="font-size: 0.85rem;">🔒 Gambar Anda tidak dikirim ke server manapun - 100% Private</p>
     </footer>
 
-    <!-- Background Removal Library - RMBG Model -->
-    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/browser.js"></script>
+    <!-- Background Removal using simple canvas manipulation -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/deeplab@0.2.1/dist/deeplab.min.js"></script>
     
     <script>
+        let deeplabModel = null;
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const loading = document.getElementById('loading');
@@ -494,8 +496,23 @@
 
         let currentImageBlob = null;
 
-        console.log('✅ Script loaded, checking removeBackground...');
-        console.log('removeBackground available:', typeof removeBackground);
+        console.log('Loading DeepLab model...');
+
+        // Load DeepLab model
+        async function loadModel() {
+            try {
+                deeplabModel = await deeplab.load({
+                    base: 'pascal',
+                    quantizationBytes: 2
+                });
+                console.log('✅ DeepLab model loaded successfully');
+            } catch (error) {
+                console.error('❌ Failed to load model:', error);
+            }
+        }
+
+        // Initialize on page load
+        loadModel();
 
         // Upload area click
         uploadArea.addEventListener('click', (e) => {
@@ -547,67 +564,106 @@
                 return;
             }
 
-            // Check if removeBackground is available
-            if (typeof removeBackground === 'undefined') {
-                alert('Library belum dimuat. Silakan refresh halaman dan coba lagi.');
-                console.error('removeBackground is undefined');
-                return;
-            }
-
             // Show loading
             uploadArea.style.display = 'none';
             loading.classList.add('active');
             resultArea.classList.remove('active');
 
             try {
-                // Load and show original image
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    originalImage.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
+                // Wait for model
+                let retries = 0;
+                while (!deeplabModel && retries < 100) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    retries++;
+                }
 
-                console.log('Removing background...');
-                
-                // Process with imgly background removal
-                const blob = await removeBackground(file, {
-                    progress: (key, current, total) => {
-                        console.log(`Progress: ${key} ${current}/${total}`);
-                    }
-                });
+                if (!deeplabModel) {
+                    throw new Error('Model belum siap. Refresh halaman dan coba lagi.');
+                }
 
-                console.log('✅ Background removed successfully');
-                currentImageBlob = blob;
+                // Load image
+                const img = await loadImage(file);
+                originalImage.src = img.src;
 
-                // Display result on canvas
-                const img = new Image();
-                const url = URL.createObjectURL(blob);
+                console.log('Segmenting image...');
                 
-                img.onload = () => {
-                    resultCanvas.width = img.width;
-                    resultCanvas.height = img.height;
-                    const ctx = resultCanvas.getContext('2d');
-                    ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
-                    ctx.drawImage(img, 0, 0);
-                    URL.revokeObjectURL(url);
+                // Segment image
+                const segmentationMap = await deeplabModel.segment(img);
+                
+                console.log('Creating transparent background...');
+                await createTransparentImage(img, segmentationMap);
 
-                    // Show result
-                    loading.classList.remove('active');
-                    resultArea.classList.add('active');
-                };
-                
-                img.onerror = (error) => {
-                    console.error('Error loading result image:', error);
-                    throw new Error('Gagal memuat hasil');
-                };
-                
-                img.src = url;
+                console.log('✅ Processing complete');
+                loading.classList.remove('active');
+                resultArea.classList.add('active');
 
             } catch (error) {
                 console.error('Error processing image:', error);
-                alert('Terjadi kesalahan saat memproses gambar: ' + error.message + '\n\nTips:\n- Pastikan koneksi internet stabil\n- Refresh halaman dan coba lagi\n- Gunakan gambar dengan ukuran lebih kecil');
+                alert('Terjadi kesalahan: ' + error.message + '\n\nPastikan koneksi internet stabil dan refresh halaman.');
                 resetUI();
             }
+        }
+
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function createTransparentImage(img, segmentationMap) {
+            // Set canvas size
+            resultCanvas.width = img.width;
+            resultCanvas.height = img.height;
+            const ctx = resultCanvas.getContext('2d');
+
+            // Draw original image
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            const pixels = imageData.data;
+
+            // Get segmentation data
+            const { segmentationMap: maskData, width, height } = segmentationMap;
+
+            // Scale factor if sizes don't match
+            const scaleX = width / img.width;
+            const scaleY = height / img.height;
+
+            // Apply mask - keep person (label 15) and remove background
+            for (let y = 0; y < img.height; y++) {
+                for (let x = 0; x < img.width; x++) {
+                    const maskX = Math.floor(x * scaleX);
+                    const maskY = Math.floor(y * scaleY);
+                    const maskIndex = maskY * width + maskX;
+                    const pixelIndex = (y * img.width + x) * 4;
+                    
+                    // DeepLab label 15 = person, 0 = background
+                    // Keep anything that's not background (0)
+                    if (maskData[maskIndex] === 0) {
+                        pixels[pixelIndex + 3] = 0; // Make transparent
+                    }
+                }
+            }
+
+            // Put back modified image
+            ctx.putImageData(imageData, 0, 0);
+
+            // Create blob
+            return new Promise((resolve) => {
+                resultCanvas.toBlob((blob) => {
+                    currentImageBlob = blob;
+                    resolve();
+                }, 'image/png');
+            });
         }
 
         // Download button
@@ -647,7 +703,9 @@
             currentImageBlob = null;
             originalImage.src = '';
             const ctx = resultCanvas.getContext('2d');
-            ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+            if (resultCanvas.width > 0) {
+                ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+            }
         }
     </script>
 </body>
