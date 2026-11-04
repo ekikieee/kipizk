@@ -480,9 +480,9 @@
     </footer>
 
     <!-- Background Removal Library - RMBG Model -->
-    <script type="module">
-        import imglyRemoveBackground from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm';
-
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/browser.js"></script>
+    
+    <script>
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const loading = document.getElementById('loading');
@@ -494,7 +494,8 @@
 
         let currentImageBlob = null;
 
-        console.log('✅ Background removal library loaded');
+        console.log('✅ Script loaded, checking removeBackground...');
+        console.log('removeBackground available:', typeof removeBackground);
 
         // Upload area click
         uploadArea.addEventListener('click', (e) => {
@@ -546,6 +547,13 @@
                 return;
             }
 
+            // Check if removeBackground is available
+            if (typeof removeBackground === 'undefined') {
+                alert('Library belum dimuat. Silakan refresh halaman dan coba lagi.');
+                console.error('removeBackground is undefined');
+                return;
+            }
+
             // Show loading
             uploadArea.style.display = 'none';
             loading.classList.add('active');
@@ -562,7 +570,7 @@
                 console.log('Removing background...');
                 
                 // Process with imgly background removal
-                const blob = await imglyRemoveBackground(file, {
+                const blob = await removeBackground(file, {
                     progress: (key, current, total) => {
                         console.log(`Progress: ${key} ${current}/${total}`);
                     }
