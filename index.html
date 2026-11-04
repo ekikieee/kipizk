@@ -365,19 +365,73 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            .header-content {
+                padding: 0 20px;
+            }
+
+            .logo {
+                font-size: 22px;
+            }
+
+            .header-info {
+                font-size: 11px;
+            }
+
+            .hero {
+                padding: 40px 20px 30px;
+            }
+
             h1 {
                 font-size: 32px;
             }
 
             .subtitle {
                 font-size: 16px;
+                margin-bottom: 30px;
+            }
+
+            .upload-section {
+                padding: 0 20px 60px;
             }
 
             .upload-box {
                 padding: 50px 24px;
             }
 
+            .upload-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 30px;
+                margin-bottom: 20px;
+            }
+
+            .upload-title {
+                font-size: 20px;
+            }
+
+            .upload-desc {
+                font-size: 14px;
+            }
+
+            .btn-upload {
+                padding: 14px 36px;
+                font-size: 15px;
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .result-section {
+                padding: 0 20px 60px;
+            }
+
+            .result-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
             .btn-group {
+                width: 100%;
                 flex-direction: column;
             }
 
@@ -387,7 +441,48 @@
             }
 
             .comparison-tabs {
-                flex-direction: column;
+                flex-direction: row;
+            }
+
+            .tab {
+                font-size: 13px;
+                padding: 14px 12px;
+            }
+
+            .image-container {
+                padding: 20px;
+                min-height: 300px;
+            }
+
+            .image-display, canvas {
+                max-height: 400px;
+            }
+
+            footer {
+                padding: 30px 20px;
+            }
+
+            .footer-text {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 28px;
+            }
+
+            .subtitle {
+                font-size: 15px;
+            }
+
+            .upload-title {
+                font-size: 18px;
+            }
+
+            .tab {
+                font-size: 12px;
+                padding: 12px 8px;
             }
         }
     </style>
